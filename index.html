@@ -1,0 +1,58 @@
+ <!DOCTYPE html> <html>
+<head>
+<title>Video Player</title>
+</head> <body>
+<label for="sourceType">Select Video Source:</label> <select id="sourceType" onchange="showPlayer()">
+<option value="local">Local</option>
+<option value="lan">LAN Network</option></select ><br />
+<div id="playerContainer"></div>
+<script>
+function showPlayer() {
+var sourceType = document.getElementById("sourceType").value; var playerContainer = document.getElementById("playerContainer"); playerContainer.innerHTML = ""; // Clear previous player
+if (sourceType === "local") { showLocalPlayer();
+} else if (sourceType === "lan") { showLANPlayer();
+} }
+function showLocalPlayer() {
+var playerContainer = document.getElementById("playerContainer"); var videoFile = document.createElement("input");
+videoFile.type = "file";
+videoFile.id = "videoFile";
+var seekInputLabel = document.createElement("label"); seekInputLabel.textContent = "Seek to (in seconds): "; var seekInput = document.createElement("input"); seekInput.type = "number";
+seekInput.id = "seekInputLocal";
+var playButton = document.createElement("button"); playButton.textContent = "Play Video"; playButton.onclick = function () {
+var seekTo = seekInput.value;
+var videoPlayer = document.createElement("video"); videoPlayer.controls = true; videoPlayer.style.maxWidth = "800px"; videoPlayer.style.maxHeight = "600px";
+
+ var source = document.createElement("source"); source.src = URL.createObjectURL(videoFile.files[0]); source.type = "video/mp4";
+videoPlayer.appendChild(source); playerContainer.innerHTML = ""; playerContainer.appendChild(videoPlayer);
+videoPlayer.addEventListener("loadedmetadata", function () { videoPlayer.currentTime = seekTo;
+setTimeout(function () { videoPlayer.play().catch(function (error) {
+console.error("Failed to play video:", error); });
+}, 100); });
+};
+playerContainer.appendChild(videoFile); playerContainer.appendChild(seekInputLabel); playerContainer.appendChild(seekInput); playerContainer.appendChild(document.createElement("br")); playerContainer.appendChild(playButton);
+}
+function showLANPlayer() {
+var playerContainer = document.getElementById("playerContainer");
+var ipAddressLabel = document.createElement("label"); ipAddressLabel.textContent = "IP Address: ";
+var ipAddressInput = document.createElement("input"); ipAddressInput.type = "text";
+ipAddressInput.id = "ipAddress";
+var videoPathLabel = document.createElement("label"); videoPathLabel.textContent = "Video File Path: ";
+var videoPathInput = document.createElement("input"); videoPathInput.type = "text";
+videoPathInput.id = "videoPath";
+var seekInputLabel = document.createElement("label"); seekInputLabel.textContent = "Seek to (in seconds): "; var seekInput = document.createElement("input"); seekInput.type = "number";
+seekInput.id = "seekInputLAN";
+
+ var playButton = document.createElement("button"); playButton.textContent = "Play Video"; playButton.onclick = function () {
+var ipAddress = document.getElementById("ipAddress").value; var videoPath = document.getElementById("videoPath").value; var seekTo = seekInput.value;
+var videoPlayer = document.createElement("video"); videoPlayer.controls = true; videoPlayer.style.maxWidth = "800px"; videoPlayer.style.maxHeight = "600px";
+var source = document.createElement("source"); source.src = "file://" + ipAddress + "/" + videoPath; source.type = "video/mp4";
+videoPlayer.appendChild(source); playerContainer.innerHTML = ""; playerContainer.appendChild(videoPlayer);
+videoPlayer.addEventListener("loadedmetadata", function () { videoPlayer.currentTime = seekTo;
+setTimeout(function () { videoPlayer.play().catch(function (error) {
+console.error("Failed to play video:", error); });
+}, 100); });
+};
+playerContainer.appendChild(ipAddressLabel); playerContainer.appendChild(ipAddressInput); playerContainer.appendChild(document.createElement("br")); playerContainer.appendChild(videoPathLabel); playerContainer.appendChild(videoPathInput); playerContainer.appendChild(document.createElement("br")); playerContainer.appendChild(seekInputLabel); playerContainer.appendChild(seekInput); playerContainer.appendChild(document.createElement("br")); playerContainer.appendChild(playButton);
+}
+</script> </body>
+</html>
