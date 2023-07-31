@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Video Player</title>
+  </head>
+  <body>
+    <label for="sourceType">Select Video Source:</label>
+    <select id="sourceType" onchange="showPlayer()">
+      <option value="local">Local</option>
+      <option value="lan">LAN Network (Single Video)</option>
+      <option value="lan_folder">LAN Network (Multiple Videos)</option>
+    </select>
+    <br />
+
+    <div id="playerContainer"></div>
+
+    <script>
+      function showPlayer() {
+        var sourceType = document.getElementById("sourceType").value;
+        var playerContainer = document.getElementById("playerContainer");
+        playerContainer.innerHTML = ""; // Clear previous player
+
+        if (sourceType === "local") {
+          showLocalPlayer();
+        } else if (sourceType === "lan") {
+          showLANPlayer();
+        } else if (sourceType === "lan_folder") {
+          showLANFolderPlayer();
+        }
+      }
+
+      function showLocalPlayer() {
+        var playerContainer = document.getElementById("playerContainer");
+        var videoFile = document.createElement("input");
+        videoFile.type = "file";
+        videoFile.id = "videoFile";
+
+        var seekInputLabel = document.createElement("label");
+        seekInputLabel.textContent = "Seek to (in seconds): ";
+        var seekInput = document.createElement("input");
+        seekInput.type = "number";
+        seekInput.id = "seekInputLocal";
+
+        var playButton = document.createElement("button");
+        playButton.textContent = "Play Video";
+        playButton.onclick = function () {
+          var seekTo = seekInput.value;
+
+          var videoPlayer = document.createElement("video");
+          videoPlayer.controls = true;
+          videoPlayer.style.maxWidth = "800px";
+          videoPlayer.style.maxHeight = "600px";
+
+          var source = document.createElement("source");
+          source.src = URL.createObjectURL(videoFile.files[0]);
+          source.type = "video/mp4";
+
+          videoPlayer.appendChild(source);
+          playerContainer.innerHTML = "";
+          playerContainer.appendChild(videoPlayer);
+
+          videoPlayer.addEventListener("loadedmetadata", function () {
+            videoPlayer.currentTime = seekTo;
+
+            setTimeout(function () {
+              videoPlayer.play().catch(function (error) {
+                console.error("Failed to play video:", error);
+              });
+            }, 100);
+          });
+        };
+
+        playerContainer.appendChild(videoFile);
+        playerContainer.appendChild(seekInputLabel);
+        playerContainer.appendChild(seekInput);
+        playerContainer.appendChild(document.createElement("br"));
+        playerContainer.appendChild(playButton);
+      }
+
+      function showLANPlayer() {
+        var playerContainer = document.getElementById("playerContainer");
+
+        var ipAddressLabel = document.createElement("label");
+        ipAddressLabel.textContent = "IP Address: ";
+        var ipAddressInput = document.createElement("input");
+        ipAddressInput.type = "text";
+        ipAddressInput.id = "ipAddress";
+
+        var videoPathLabel = document.createElement("label");
+        videoPathLabel.textContent = "Video File Path: ";
+        var videoPathInput = document.createElement("input");
+        videoPathInput.type = "text";
+        videoPathInput.id = "videoPath";
+
+        var seekInputLabel = document.createElement("label");
+        seekInputLabel.textContent = "Seek to (in seconds): ";
+        var seekInput = document.createElement("input");
+        seekInput.type = "number";
+        seekInput.id = "seekInputLAN";
+
+        var playButton = document.createElement("button");
+        playButton.textContent = "Play Video";
+        playButton.onclick = function () {
+          var ipAddress = document.getElementById("ipAddress").value;
+          var videoPath = document.getElementById("videoPath").value;
+          var seekTo = seekInput.value;
+
+          var videoPlayer = document.createElement("video");
+          videoPlayer.controls = true;
+          videoPlayer.style.maxWidth = "800px";
+          videoPlayer.style.maxHeight = "600px";
+
+          var source = document.createElement("source");
+          source.src = "file://" + ipAddress + "/" + videoPath;
+          source.type = "video/mp4";
+
+          videoPlayer.appendChild(source);
+          playerContainer.innerHTML = "";
+          playerContainer.appendChild(videoPlayer);
+
+          videoPlayer.addEventListener("loadedmetadata", function () {
+            videoPlayer.currentTime = seekTo;
+
+            setTimeout(function () {
+              videoPlayer.play().catch(function (error) {
+                console.error("Failed to play video:", error);
+              });
+            }, 100);
+          });
+        };
+
+        playerContainer.appendChild(ipAddressLabel);
+        playerContainer.appendChild(ipAddressInput);
+        playerContainer.appendChild(document.createElement("br"));
+        playerContainer.appendChild(videoPathLabel);
+        playerContainer.appendChild(videoPathInput);
+        playerContainer.appendChild(document.createElement("br"));
+        playerContainer.appendChild(seekInputLabel);
+        playerContainer.appendChild(seekInput);
+        playerContainer.appendChild(document.createElement("br"));
+        playerContainer.appendChild(playButton);
+      }
+
+      function showLANFolderPlayer() {
+        var playerContainer = document.getElementById("playerContainer");
+
+        var ipAddressLabel = document.createElement("label");
+        ipAddressLabel.textContent = "IP Address: ";
+        var ipAddressInput = document.createElement("input");
+        ipAddressInput.type = "text";
+        ipAddressInput.id = "ipAddressFolder";
+
+        var folderPathLabel = document.createElement("label");
+        folderPathLabel.textContent = "Folder Path: ";
+        var folderPathInput = document.createElement("input");
+        folderPathInput.type = "text";
+        folderPathInput.id = "folderPath";
+
+        var playButton = document.createElement("button");
+        playButton.textContent = "Play Videos";
+        playButton.onclick = function () {
+          var ipAddress = document.getElementById("ipAddressFolder").value;
+          var folderPath = document.getElementById("folderPath").value;
+
+          fetchVideosFromFolder(ipAddress, folderPath);
+        };
+
+        playerContainer.appendChild(ipAddressLabel);
+        playerContainer.appendChild(ipAddressInput);
+        playerContainer.appendChild(document.createElement("br"));
+        playerContainer.appendChild(folderPathLabel);
+        playerContainer.appendChild(folderPathInput);
+        playerContainer.appendChild(document.createElement("br"));
+        playerContainer.appendChild(playButton);
+      }
+
+      function fetchVideosFromFolder(ipAddress, folderPath) {
+        fetch(`file://${ipAddress}/videos?folder=${folderPath}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.videos && data.videos.length > 0) {
+              playVideosFromFolder(ipAddress, folderPath, data.videos);
+            } else {
+              console.error("No videos found in the folder.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching videos:", error);
+          });
+      }
+
+      function playVideosFromFolder(ipAddress, folderPath, videos) {
+        var playerContainer = document.getElementById("playerContainer");
+        playerContainer.innerHTML = "";
+
+        var videoPlayer = document.createElement("video");
+        videoPlayer.controls = true;
+        videoPlayer.style.maxWidth = "800px";
+        videoPlayer.style.maxHeight = "600px";
+
+        var currentIndex = 0;
+
+        function playNextVideo() {
+          if (currentIndex >= videos.length) {
+            console.log("All videos played.");
+            return;
+          }
+
+          var videoSource = videos[currentIndex];
+
+          var source = document.createElement("source");
+          source.src = `file://${ipAddress}/${folderPath}/${videoSource}`;
+          source.type = "video/mp4";
+
+          videoPlayer.innerHTML = "";
+          videoPlayer.appendChild(source);
+          playerContainer.innerHTML = "";
+          playerContainer.appendChild(videoPlayer);
+
+          videoPlayer.addEventListener("ended", function () {
+            currentIndex++;
+            playNextVideo();
+          });
+
+          videoPlayer.play().catch(function (error) {
+            console.error("Failed to play video:", error);
+          });
+        }
+
+        playNextVideo();
+      }
+    </script>
+  </body>
+</html>
+<!-- 
+
+To set up a local web server using XAMPP, follow these steps:
+
+1. **Download and Install XAMPP**: 
+   - Visit the official XAMPP website (https://www.apachefriends.org/index.html).
+   - Download the appropriate XAMPP version for your operating system (Windows, macOS, Linux).
+   - Run the installer and follow the installation instructions.
+
+2. **Start XAMPP and Start Apache**:
+   - After the installation is complete, open the XAMPP control panel.
+   - Start the Apache server by clicking the "Start" button next to "Apache".
+
+3. **Create a Project Directory**:
+   - Create a folder in the `htdocs` directory of your XAMPP installation. By default, the path is `C:\xampp\htdocs` on Windows or `/Applications/XAMPP/htdocs` on macOS.
+   - This folder will serve as the root directory for your project.
+
+4. **Place your Project Files**:
+   - Copy your project files into the project directory you created in the previous step.
+
+5. **Access your Project**:
+   - Open your web browser.
+   - Enter `http://localhost/your-project-folder` in the address bar, replacing `your-project-folder` with the name of the folder you created in step 3.
+   - Your project should now be accessible through the local web server.
+
+Note: Remember to start the Apache server in the XAMPP control panel whenever you want to access your local web server.
+
+That's it! You now have a local web server set up using XAMPP. You can place your project files in the `htdocs` directory and access them through `http://localhost` followed by the appropriate folder or file path. -->
